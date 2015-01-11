@@ -17,8 +17,11 @@ spec = do
   describe "lime parser" $ do
     it "parses numbers" $ forAll numberGen verifyAst
     it "parses strings" $ forAll stringGen verifyAst
+    it "parses bools" $ forAll boolGen verifyAst
     it "parses atoms" $ forAll atomGen verifyAst
     it "parses lists" $ forAll listGen verifyAst
+    it "parses nested lists" $ forAll nestedListGen verifyAst
+    it "parses quotes" $ forAll quotedGen verifyAst
 
 verifyAst :: (String, Expr) -> IO ()
 verifyAst (code, ast) = astify code `shouldBe` Right ast
@@ -38,6 +41,9 @@ stringGen = do
         find = ["\t",  "\n",  "\"",   "\\"]
         repl = ["\\t", "\\n", "\\\"", "\\\\"]
 
+boolGen :: Gen (String, Expr)
+boolGen = elements [("true", Bool True), ("false", Bool False)]
+
 atomGen :: Gen (String, Expr)
 atomGen = do
             head <- elements letter
@@ -49,7 +55,19 @@ atomGen = do
         symbol = "!#$%&|*+-/:<=>?@^_~"
 
 listGen :: Gen (String, Expr)
-listGen = do
-            (codes, asts) <- liftM unzip $ listOf (oneof [numberGen, stringGen, atomGen])
+listGen = listGen' [numberGen, stringGen, atomGen]
+
+-- we'll test one level of nesting
+nestedListGen :: Gen (String, Expr)
+nestedListGen = listGen' [numberGen, stringGen, atomGen, listGen]
+
+listGen' :: [Gen (String, Expr)] -> Gen (String, Expr)
+listGen' gens = do
+            (codes, asts) <- liftM unzip $ listOf (oneof gens)
             return (stringify codes, List asts)
   where stringify x = "(" ++ (concat $ intersperse " " x) ++ ")"
+
+quotedGen :: Gen (String, Expr)
+quotedGen = do
+             (code, ast) <- oneof [numberGen, stringGen, atomGen, listGen]
+             return ('\'':code, List [Atom "quote", ast])

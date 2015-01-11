@@ -1,6 +1,6 @@
 module Lime.Parser
 ( astify
-, Expr (Number, String, Atom, List)
+, Expr (Number, String, Bool, Atom, List)
 ) where
 
 import Data.String.Utils
@@ -8,6 +8,7 @@ import Text.ParserCombinators.Parsec
 
 data Expr = Number Int
           | String String
+          | Bool Bool
           | Atom String
           | List [Expr]
           deriving (Show, Eq)
@@ -20,6 +21,13 @@ parseExpr = parseInt
         <|> parseString
         <|> parseAtom
         <|> parseList
+        <|> parseQuoted
+
+parseQuoted :: Parser Expr
+parseQuoted = do
+                char '\''
+                expr <- parseExpr
+                return $ List [Atom "quote", expr]
 
 parseList :: Parser Expr
 parseList = do
@@ -51,5 +59,9 @@ parseAtom :: Parser Expr
 parseAtom = do
               head <- letter
               rest <- many (letter <|> digit <|> symbol)
-              return $ Atom (head:rest)
+              return $ case (head:rest) of
+                "true" -> Bool True
+                "false" -> Bool False
+                x -> Atom x
   where symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
+
