@@ -16,10 +16,14 @@ cabal-version:       >=1.8
 
 library
   exposed-modules:     Lime.Parser
+                     , Lime.Codegen
   hs-source-dirs:      src
   build-depends:       base
                      , parsec
                      , MissingH
+                     , hs-java
+                     , bytestring
+                     , control-monad-exception
   build-depends:       base ==4.6.*
 
 test-suite hspec
@@ -30,5 +34,8 @@ test-suite hspec
                      , QuickCheck
                      , MissingH
                      , parsec
+                     , hs-java
+                     , bytestring
                      , lime-hs
+                     , control-monad-exception
   type:                exitcode-stdio-1.0
