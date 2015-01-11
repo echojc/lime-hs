@@ -2,6 +2,7 @@
 
 runtest () {
   if cabal build; then
+    echo "Running test..."
     cabal test &>/dev/null
     cat dist/test/*-hspec.log
   fi
