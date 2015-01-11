@@ -4,6 +4,8 @@ import Test.Hspec
 import Test.QuickCheck
 import Text.ParserCombinators.Parsec.Error (ParseError, errorMessages)
 
+import Control.Monad
+import Data.List
 import Data.String.Utils
 import Lime.Parser
 
@@ -16,8 +18,7 @@ spec = do
     it "parses numbers" $ forAll numberGen verifyAst
     it "parses strings" $ forAll stringGen verifyAst
     it "parses atoms" $ forAll atomGen verifyAst
-
-----
+    it "parses lists" $ forAll listGen verifyAst
 
 verifyAst :: (String, Expr) -> IO ()
 verifyAst (code, ast) = astify code `shouldBe` Right ast
@@ -46,3 +47,9 @@ atomGen = do
   where letter = ['a'..'z'] ++ ['A'..'Z']
         digit = ['0'..'9']
         symbol = "!#$%&|*+-/:<=>?@^_~"
+
+listGen :: Gen (String, Expr)
+listGen = do
+            (codes, asts) <- liftM unzip $ listOf (oneof [numberGen, stringGen, atomGen])
+            return (stringify codes, List asts)
+  where stringify x = "(" ++ (concat $ intersperse " " x) ++ ")"

@@ -1,6 +1,6 @@
 module Lime.Parser
 ( astify
-, Expr (Number, String, Atom)
+, Expr (Number, String, Atom, List)
 ) where
 
 import Data.String.Utils
@@ -9,6 +9,7 @@ import Text.ParserCombinators.Parsec
 data Expr = Number Int
           | String String
           | Atom String
+          | List [Expr]
           deriving (Show, Eq)
 
 astify :: String -> Either ParseError Expr
@@ -18,6 +19,15 @@ parseExpr :: Parser Expr
 parseExpr = parseInt
         <|> parseString
         <|> parseAtom
+        <|> parseList
+
+parseList :: Parser Expr
+parseList = do
+              char '('
+              exprs <- sepBy parseExpr whitespace
+              char ')'
+              return $ List exprs
+  where whitespace = skipMany1 space
 
 parseInt :: Parser Expr
 parseInt = do
